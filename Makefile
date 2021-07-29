@@ -2,19 +2,35 @@ CPLEXFLAGS=-O3 -m64 -O -fPIC -fexceptions -DNDEBUG -DIL_STD -I/home/kallyous/App
 
 CFLAGS=-std=c++11 -static-libstdc++ -static-libgcc -Wall
 
-all:maximumBalancedBicliqueProblem.o
-	g++  maximumBalancedBicliqueProblem.o -o maximumBalancedBicliqueProblem.run $(CPLEXFLAGS) $(CFLAGS)
-
 %.o: %.cpp %.hpp
 	g++ -c $< -o $@ $(CFLAGS)
 
-maximumBalancedBicliqueProblem.o: maximumBalancedBicliqueProblem.cpp
-	g++ -c -o maximumBalancedBicliqueProblem.o maximumBalancedBicliqueProblem.cpp $(CPLEXFLAGS) $(CFLAGS)
-
 clean:
-	rm -f solver
-	mv maximumBalancedBicliqueProblem.run solver
 	rm -f *.o
 
 test:
 	./solver < "DIMACS-V/C/C250-9"
+
+run-v1:
+	./solver-v1-orig < "DIMACS-V/C/C250-9"
+
+generate-lazy:
+	echo "GENERATE LAZY SOLVER STARTED"
+	g++ -c -o solver-lazy.o solver-lazy.cpp $(CPLEXFLAGS) $(CFLAGS)
+	g++  solver-lazy.o -o solver $(CPLEXFLAGS) $(CFLAGS)
+	echo "TEST BUILD"
+	./solver < "DIMACS-V/MANN/MANN-a9"
+
+generate-callback:
+	echo "GENERATE CALLBACK SOLVER STARTED"
+	g++ -c -o solver-callback.o solver-callback.cpp $(CPLEXFLAGS) $(CFLAGS)
+	g++  solver-callback.o -o solver $(CPLEXFLAGS) $(CFLAGS)
+	echo "TEST BUILD"
+	./solver < "DIMACS-V/MANN/MANN-a9"
+
+generate-v1:
+	echo "GENERATE ORIGINAL SOLVER STARTED"
+	g++ -c -o solver-orig.o solver-orig.cpp $(CPLEXFLAGS) $(CFLAGS)
+	g++  solver-orig.o -o solver $(CPLEXFLAGS) $(CFLAGS)
+	echo "TEST BUILD"
+	./solver < "DIMACS-V/MANN/MANN-a9"
