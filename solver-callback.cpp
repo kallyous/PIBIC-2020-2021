@@ -5,7 +5,7 @@
 using namespace std;
 
 // Implementação do callback
-ILOLAZYCONSTRAINTCALLBACK2(MaxBalBiProLazyCallback, IloBoolVarArray &, x, IloBoolVarArray &, y){
+ILOLAZYCONSTRAINTCALLBACK2(MaxBalBiProLazyCallback, IloBoolVarArray &, x, IloBoolVarArray &, y) {
 
     // Referência do ambiente.
     IloEnv masterEnv = getEnv();
@@ -64,7 +64,6 @@ ILOLAZYCONSTRAINTCALLBACK2(MaxBalBiProLazyCallback, IloBoolVarArray &, x, IloBoo
 }
 
 
-
 int main(int argc, char* argv[])
 {
     // Definições iniciais.
@@ -75,7 +74,7 @@ int main(int argc, char* argv[])
     // Limite de tempo de execução.
     cplex.setParam(IloCplex::Param::TimeLimit, 60);
 
-    // Limite de RAM a utilizar, em megabytes. ~10GB.
+    // Limite de RAM a utilizar, em megabytes.
     cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
 
     // Verifica e ativa parâmetro bound.
@@ -139,7 +138,6 @@ int main(int argc, char* argv[])
 
     // Função objetivo, MAX(⅀wx + ⅀wy)
     maximumBalancedBicliqueProblem.add(IloMaximize(env, weigxSum + weigySum));
-
 
     // Restrição da igualdade da quantidade de vértices nos dois grupos da biclique.
     maximumBalancedBicliqueProblem.add(xSum == ySum);

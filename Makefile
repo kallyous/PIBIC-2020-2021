@@ -14,6 +14,13 @@ test:
 run-v1:
 	./solver-v1-orig < "DIMACS-V/C/C250-9"
 
+generate-v1:
+	echo "GENERATE ORIGINAL SOLVER STARTED"
+	g++ -c -o solver-orig.o solver-orig.cpp $(CPLEXFLAGS) $(CFLAGS)
+	g++  solver-orig.o -o solver $(CPLEXFLAGS) $(CFLAGS)
+	echo "TEST BUILD"
+	./solver < "DIMACS-V/MANN/MANN-a9"
+
 generate-lazy:
 	echo "GENERATE LAZY SOLVER STARTED"
 	g++ -c -o solver-lazy.o solver-lazy.cpp $(CPLEXFLAGS) $(CFLAGS)
@@ -25,12 +32,5 @@ generate-callback:
 	echo "GENERATE CALLBACK SOLVER STARTED"
 	g++ -c -o solver-callback.o solver-callback.cpp $(CPLEXFLAGS) $(CFLAGS)
 	g++  solver-callback.o -o solver $(CPLEXFLAGS) $(CFLAGS)
-	echo "TEST BUILD"
-	./solver < "DIMACS-V/MANN/MANN-a9"
-
-generate-v1:
-	echo "GENERATE ORIGINAL SOLVER STARTED"
-	g++ -c -o solver-orig.o solver-orig.cpp $(CPLEXFLAGS) $(CFLAGS)
-	g++  solver-orig.o -o solver $(CPLEXFLAGS) $(CFLAGS)
 	echo "TEST BUILD"
 	./solver < "DIMACS-V/MANN/MANN-a9"
