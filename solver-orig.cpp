@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
         for (int j = i+1; j <n; j ++)
             if (! edges.count({i, j}))
                 no_edges.insert({i, j});
-            cerr << "No edges = " << no_edges.size() << endl;
+    cerr << "No edges = " << no_edges.size() << endl;
 
     // Variáveis de decisão.
     IloBoolVarArray x(env, n), y(env, n);
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
         maximumBalancedBicliqueProblem.add(y[edge.first] + y[edge.second] <= 1); // (7)
     }
 
-    // (8) (9) For each nonedge uv, u and v can't be in diff parts
+    // (8) (9) For each no_edge uv, u and v can't be in diff parts
     for (auto edge: no_edges) {
         maximumBalancedBicliqueProblem.add(x[edge.first] + y[edge.second] <= 1); // (8)
         maximumBalancedBicliqueProblem.add(x[edge.second] + y[edge.first] <= 1); // (9)
