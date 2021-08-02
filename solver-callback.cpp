@@ -4,7 +4,7 @@
 #include <ilcplex/ilocplex.h>
 using namespace std;
 
-/* Versão com callback */
+// Implementação do callback
 ILOLAZYCONSTRAINTCALLBACK2(MaxBalBiProLazyCallback, IloBoolVarArray &, x, IloBoolVarArray &, y){
 
     // Referência do ambiente.
@@ -57,7 +57,7 @@ ILOLAZYCONSTRAINTCALLBACK2(MaxBalBiProLazyCallback, IloBoolVarArray &, x, IloBoo
 
 	    }
 
-		// TODO: Adicionar tolerância. Ver na internet como o cplex usa a tolerância.
+		// TODO: Ver como CPLEX usa tolerância e personalizar isso se necessário.
 	}
 
 	return;
@@ -67,6 +67,7 @@ ILOLAZYCONSTRAINTCALLBACK2(MaxBalBiProLazyCallback, IloBoolVarArray &, x, IloBoo
 
 int main(int argc, char* argv[])
 {
+    // Definições iniciais.
     IloEnv env;
     IloModel maximumBalancedBicliqueProblem(env, "Maximum Balanced Biclique Problem");
     IloCplex cplex(maximumBalancedBicliqueProblem);
@@ -77,6 +78,7 @@ int main(int argc, char* argv[])
     // Limite de RAM a utilizar, em megabytes. ~10GB.
     cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
 
+    // Verifica e ativa parâmetro bound.
     bool hasBound = false;
     int bound;
     if(argc > 1) {
@@ -85,12 +87,12 @@ int main(int argc, char* argv[])
         cout << "Using bound " << bound << "\n";
     }
 
-
-    // Statement Data:
+    // Lê quantidade de vértices/nodes 'n' e quantidade de arestas/edges 'e'.
     int n, e;
     scanf("%d %d", &n, &e);
     cout << "Instance with " << n << " vertices and " << e << " edges\n";
 
+    // Lê os valores dos pesos dos 'n' vértices.
     vector<int> weights(n);
     int w;
     for (int i = 0; i < n; i ++) {
@@ -98,9 +100,8 @@ int main(int argc, char* argv[])
         weights[i] = w;
     }
 
-
+    // Lê as informações das 'e' arestas.
     set<pair<int, int>> edges;
-    set<pair<int, int>> no_edges;
     int u, v;
     for (int i = 0; i < e; i ++)
     {
@@ -108,53 +109,59 @@ int main(int argc, char* argv[])
         if(v < u) swap(u,v);
         edges.insert({u-1, v-1}); // Vertices number start at 1
     }
-    for (int i = 0; i <n; i ++)
+
+    // TODO: questionar prof Rian sobre esses no_edges.
+    set<pair<int, int>> no_edges;
+    for (int i = 0; i < n; i ++)
         for (int j = i+1; j <n; j ++)
             if (! edges.count({i, j}))
                 no_edges.insert({i, j});
-            cerr << "No edges = " << no_edges.size() << endl;
+    cerr << "No edges = " << no_edges.size() << endl;
 
-            // Decision Variables:
-            IloBoolVarArray x(env, n), y(env, n);
+    // Variáveis de decisão.
+    IloBoolVarArray x(env, n), y(env, n);
 
-            // Definições de expressões de soma e pesos.
-            IloExpr xSum(env), ySum(env);
-            IloExpr weigxSum(env), weigySum(env);
+    // Definições de expressões de soma e pesos.
+    IloExpr xSum(env), ySum(env);
+    IloExpr weigxSum(env), weigySum(env);
 
-            // Soma e pesos de x.
-            for (int i = 0; i < n; i ++) {
-                xSum += x[i];
-                weigxSum += x[i] * weights[i];
-            }
+    // Soma e pesos de x.
+    for (int i = 0; i < n; i ++) {
+        xSum += x[i];
+        weigxSum += x[i] * weights[i];
+    }
 
-            // Soma e poses de y.
-            for (int i = 0; i < n; i ++) {
-                ySum += y[i];
-                weigySum += y[i] * weights[i];
-            }
+    // Soma e pesos de y.
+    for (int i = 0; i < n; i ++) {
+        ySum += y[i];
+        weigySum += y[i] * weights[i];
+    }
 
-            // Função objetivo, MAX(⅀wx + ⅀wy)
-            maximumBalancedBicliqueProblem.add(IloMaximize(env, weigxSum + weigySum));
+    // Função objetivo, MAX(⅀wx + ⅀wy)
+    maximumBalancedBicliqueProblem.add(IloMaximize(env, weigxSum + weigySum));
 
 
-            // Restrição da igualdade da quantidade de vértices nos dois grupos da biclique.
-            maximumBalancedBicliqueProblem.add(xSum == ySum);
+    // Restrição da igualdade da quantidade de vértices nos dois grupos da biclique.
+    maximumBalancedBicliqueProblem.add(xSum == ySum);
 
-            if(hasBound)
-                maximumBalancedBicliqueProblem.add(weigxSum + weigySum >= bound);
+    // Uso do bound, se definido.
+    if(hasBound)
+        maximumBalancedBicliqueProblem.add(weigxSum + weigySum >= bound);
 
-            // Aplica callback
-            cplex.use( MaxBalBiProLazyCallback(env, x, y) );
+    // Aplica callback
+    cplex.use( MaxBalBiProLazyCallback(env, x, y) );
 
-            // Get Solution:
-            cplex.solve();
-            printf("MaximumVertices: %.0lf\n", cplex.getObjValue());
-            IloNumArray xSolution(env, n), ySolution(env, n);
-            cplex.getValues(xSolution, x); cplex.getValues(ySolution, y);
-            printf("x:"); for (int i = 0; i < n; i ++) if (xSolution[i]) printf(" %d", i + 1);
-            printf("\ny:"); for (int i = 0; i < n; i ++) if (ySolution[i]) printf(" %d", i + 1);
-            printf("\n");
+    // Resolve.
+    cplex.solve();
 
-            env.end();
-            return(0);
+    // Pega e exibe solução.
+    printf("MaximumVertices: %.0lf\n", cplex.getObjValue());
+    IloNumArray xSolution(env, n), ySolution(env, n);
+    cplex.getValues(xSolution, x); cplex.getValues(ySolution, y);
+    printf("x:"); for (int i = 0; i < n; i ++) if (xSolution[i]) printf(" %d", i + 1);
+    printf("\ny:"); for (int i = 0; i < n; i ++) if (ySolution[i]) printf(" %d", i + 1);
+    printf("\n");
+
+    env.end();
+    return(0);
 }
