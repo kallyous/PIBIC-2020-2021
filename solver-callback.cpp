@@ -2,7 +2,77 @@
 #include <vector>
 #include <set>
 #include <ilcplex/ilocplex.h>
+
 using namespace std;
+
+
+typedef pair<int, int> edge;
+
+
+// Lazy Constraint Callback
+ILOLAZYCONSTRAINTCALLBACK4(
+        EdgesLazyConstraintCallback,
+        IloBoolVarArray &, x,
+        IloBoolVarArray &, y,
+        set<edge> &, edges,
+        set<edge> &, no_edges) {
+
+    // Referência do ambiente.
+    IloEnv masterEnv = getEnv();
+
+    // Misc.
+    IloInt num_x = x.getSize();
+    IloInt num_y = y.getSize();
+    IloInt i;
+    IloInt n = num_x;
+
+    // Arrays onde por valores da solução atual em análise.
+    IloBoolArray x_val(masterEnv, num_x);
+    IloBoolArray y_val(masterEnv, num_y);
+
+    for (i = 0; i < n; i++) {
+
+        // Extração dos valores dos vértices.
+        x_val[i] = getValue(x[i]);
+        y_val[i] = getValue(y[i]);
+
+        // (2)  xᵢ + yᵢ <=1  ∀ vᵢ ∈ V
+        //      Vértice só pode pertencer a uma parte da biclique.
+        if (x_val[i] + y_val[i] > 1) {
+            add(x[i] + y[i] <= 1).end();
+            return;
+        }
+
+    }
+
+    // (3)  xᵢ + xⱼ <= 1  e  yᵢ + yⱼ <= 1  ∀ vᵢ,vⱼ ∈ E
+    //      Vertices adjacentes não podem pertencer ao mesmo grupo.
+    for (auto e: edges) {
+        // xᵢ + xⱼ <= 1
+        if (x_val[e.first] + x_val[e.second] > 1) {
+            add(x[e.first] + x[e.second] <= 1).end();
+            return; }
+        // yᵢ + yⱼ <= 1
+        if (y_val[e.first] + y_val[e.second] > 1) {
+            add(y[e.first] + y[e.second] <= 1).end();
+            return; }
+    }
+
+    // (4)  xᵢ + yⱼ <= 1  e  yᵢ + xⱼ <= 1  ∀ vᵢ,vⱼ ∉ E
+    //      Vértices não-adjacentes pertencem ao mesmo grupo.
+    for (auto e: no_edges) {
+        // xᵢ + yⱼ <= 1
+        if (x_val[e.first] + y_val[e.second] > 1) {
+            add(x[e.first] + y[e.second] <= 1).end();
+            return; }
+        // yᵢ + xⱼ <= 1
+        if (x_val[e.second] + y_val[e.first] > 1) {
+            add(x[e.second] + y[e.first] <= 1).end();
+            return; }
+    }
+
+    return;
+}
 
 
 int main(int argc, char* argv[])
@@ -13,10 +83,10 @@ int main(int argc, char* argv[])
     IloCplex cplex(maximumBalancedBicliqueProblem);
 
     // Limite de tempo de execução.
-    cplex.setParam(IloCplex::Param::TimeLimit, 600);
+    cplex.setParam(IloCplex::Param::TimeLimit, 60);
 
     // Limite de RAM a utilizar, em megabytes.
-    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 10000);
+    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
 
     // Verifica e ativa parâmetro bound.
     bool hasBound = false;
@@ -41,7 +111,7 @@ int main(int argc, char* argv[])
     }
 
     // Lê as informações das 'e' arestas.
-    set<pair<int, int>> edges;
+    set<edge> edges;
     int u, v;
     for (int i = 0; i < e; i ++)
     {
@@ -51,7 +121,7 @@ int main(int argc, char* argv[])
     }
 
     // TODO: questionar prof Rian sobre esses no_edges.
-    set<pair<int, int>> no_edges;
+    set<edge> no_edges;
     for (int i = 0; i < n; i ++)
         for (int j = i+1; j <n; j ++)
             if (! edges.count({i, j}))
@@ -83,25 +153,12 @@ int main(int argc, char* argv[])
     // Restrição da igualdade da quantidade de vértices nos dois grupos da biclique.
     maximumBalancedBicliqueProblem.add(xSum == ySum);
 
-    // (5) For each vertex v, v can be in only one part
-    for (int i = 0; i < n; i ++) {
-        maximumBalancedBicliqueProblem.add(x[i] + y[i] <= 1); // (5)
-    }
-
-    // (6) (7) For each edge uv, u and v can't be in the same part
-    for (auto edge: edges) {
-        maximumBalancedBicliqueProblem.add(x[edge.first] + x[edge.second] <= 1); // (6)
-        maximumBalancedBicliqueProblem.add(y[edge.first] + y[edge.second] <= 1); // (7)
-    }
-
-    // (8) (9) For each no_edge uv, u and v can't be in diff parts
-    for (auto edge: no_edges) {
-        maximumBalancedBicliqueProblem.add(x[edge.first] + y[edge.second] <= 1); // (8)
-        maximumBalancedBicliqueProblem.add(x[edge.second] + y[edge.first] <= 1); // (9)
-    }
-
+    // Uso do bound, se definido.
     if(hasBound)
         maximumBalancedBicliqueProblem.add(weigxSum + weigySum >= bound);
+
+    // Aplica callback
+    cplex.use( EdgesLazyConstraintCallback(env, x, y, edges, no_edges) );
 
     // Resolve.
     cplex.solve();
