@@ -10,66 +10,31 @@ typedef pair<int, int> edge;
 
 
 // Lazy Constraint Callback
-ILOLAZYCONSTRAINTCALLBACK4(
-        EdgesLazyConstraintCallback,
+ILOBRANCHCALLBACK4(
+        BranchByVertexWeightCallback,
         IloBoolVarArray &, x,
         IloBoolVarArray &, y,
         set<edge> &, edges,
         set<edge> &, no_edges) {
 
-    // Referência do ambiente.
-    IloEnv masterEnv = getEnv();
+    // 0) TODO: Que porra isso faz? Precisarei algo análogo?
+//    if ( getBranchType() != BranchOnVariable )
+//        return;
 
-    // Misc.
-    IloInt num_x = x.getSize();
-    IloInt num_y = y.getSize();
-    IloInt i;
-    IloInt n = num_x;
+    // 1) Obtém peso dos vértices
 
-    // Arrays onde por valores da solução atual em análise.
-    IloBoolArray x_val(masterEnv, num_x);
-    IloBoolArray y_val(masterEnv, num_y);
+    // 2) Definir epsilon: tolerância para a distância máxima das extremidades para tratar como inteiro anterior ou
+    //    próximo inteiro.
 
-    for (i = 0; i < n; i++) {
+    // TODO: O que é "viável" nesse contexto da Máxima Biclique Balanceada com Peso nos Vértices?
+    // 3) Testar viabilidade pela tolerância epsilon.
+    //    se  x[i] <= epsilon  então  x[i] == 0 .
+    //    se  x[i] >= 1 - epsilon  então  x[i] == 1 .
 
-        // Extração dos valores dos vértices.
-        x_val[i] = getValue(x[i]);
-        y_val[i] = getValue(y[i]);
-
-        // (2)  xᵢ + yᵢ <=1  ∀ vᵢ ∈ V
-        //      Vértice só pode pertencer a uma parte da biclique.
-        if (x_val[i] + y_val[i] > 1) {
-            add(x[i] + y[i] <= 1).end();
-            return;
-        }
-
-    }
-
-    // (3)  xᵢ + xⱼ <= 1  e  yᵢ + yⱼ <= 1  ∀ vᵢ,vⱼ ∈ E
-    //      Vertices adjacentes não podem pertencer ao mesmo grupo.
-    for (auto e: edges) {
-        // xᵢ + xⱼ <= 1
-        if (x_val[e.first] + x_val[e.second] > 1) {
-            add(x[e.first] + x[e.second] <= 1).end();
-            return; }
-        // yᵢ + yⱼ <= 1
-        if (y_val[e.first] + y_val[e.second] > 1) {
-            add(y[e.first] + y[e.second] <= 1).end();
-            return; }
-    }
-
-    // (4)  xᵢ + yⱼ <= 1  e  yᵢ + xⱼ <= 1  ∀ vᵢ,vⱼ ∉ E
-    //      Vértices não-adjacentes pertencem ao mesmo grupo.
-    for (auto e: no_edges) {
-        // xᵢ + yⱼ <= 1
-        if (x_val[e.first] + y_val[e.second] > 1) {
-            add(x[e.first] + y[e.second] <= 1).end();
-            return; }
-        // yᵢ + xⱼ <= 1
-        if (x_val[e.second] + y_val[e.first] > 1) {
-            add(x[e.second] + y[e.first] <= 1).end();
-            return; }
-    }
+    // 4) Ramificar se a solução não for viável.
+    //    Critério principal de ramificação é o peso dos vértices: escolher o vértice viável mais pesado e ramificar
+    //    a partir da sua inclusão na biclique.
+    //    Critério de desempate é a distância de x[i] do valor médio (nesse caso o valor médio é 0,5).
 
     return;
 }
@@ -153,12 +118,32 @@ int main(int argc, char* argv[])
     // Restrição da igualdade da quantidade de vértices nos dois grupos da biclique.
     maximumBalancedBicliqueProblem.add(xSum == ySum);
 
+    // (2)  xᵢ + yᵢ <=1  ∀ vᵢ ∈ V
+    //      Vértice só pode pertencer a uma parte da biclique.
+    for (int i = 0; i < n; i ++) {
+        maximumBalancedBicliqueProblem.add(x[i] + y[i] <= 1); // (5)
+    }
+
+    // (3)  xᵢ + xⱼ <= 1  e  yᵢ + yⱼ <= 1  ∀ vᵢ,vⱼ ∈ E
+    //      Vertices adjacentes não podem pertencer ao mesmo grupo.
+    for (auto edge: edges) {
+        maximumBalancedBicliqueProblem.add(x[edge.first] + x[edge.second] <= 1); // (6)
+        maximumBalancedBicliqueProblem.add(y[edge.first] + y[edge.second] <= 1); // (7)
+    }
+
+    // (4)  xᵢ + yⱼ <= 1  e  yᵢ + xⱼ <= 1  ∀ vᵢ,vⱼ ∉ E
+    //      Vértices não-adjacentes pertencem ao mesmo grupo (i.e. não podem estar em grupos diferentes).
+    for (auto edge: no_edges) {
+        maximumBalancedBicliqueProblem.add(x[edge.first] + y[edge.second] <= 1); // (8)
+        maximumBalancedBicliqueProblem.add(x[edge.second] + y[edge.first] <= 1); // (9)
+    }
+
     // Uso do bound, se definido.
     if(hasBound)
         maximumBalancedBicliqueProblem.add(weigxSum + weigySum >= bound);
 
     // Aplica callback
-    cplex.use( EdgesLazyConstraintCallback(env, x, y, edges, no_edges) );
+    cplex.use( BranchByVertexWeightCallback(env, x, y, edges, no_edges) );
 
     // Resolve.
     cplex.solve();

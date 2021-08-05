@@ -17,7 +17,6 @@ ILOLAZYCONSTRAINTCALLBACK2(callback, IloBoolVarArray &, x, IloBoolVarArray &, y)
 	}
 
 	for (int i=0; i < n; i++) {
-		// TODO: Adicionar tolerância. Ver na itnernet como o cplex ta usando a tolerância.
 		if (x_val[i] + y_val[i] > 1) {
 			add(x[i] + y[i] <= 1).end();
 		}
@@ -34,7 +33,10 @@ int main(int argc, char* argv[])
 	IloCplex cplex(maximumBalancedBicliqueProblem);
 
 	// Limite de tempo de execução.
-	cplex.setParam(IloCplex::Param::TimeLimit, 600);
+	cplex.setParam(IloCplex::Param::TimeLimit, 60);
+
+	// Limite de RAM a utilizar, em megabytes.
+	cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
 
 	bool hasBound = false;
 	int bound;

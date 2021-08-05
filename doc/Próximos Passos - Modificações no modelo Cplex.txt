@@ -8,5 +8,16 @@ Usar esses resultados para saber qual conjunto de restrições tem mais impacto 
 (FEITO)
 #2 Implementar e compilar versão com callback. Algoritmo falhou em encontrar melhor solução.
 
-(FAZENDO)
+(FEITO)
 #3 Debugar e refazer algoritmo dentro do callback.
+
+(A FAZER)
+#4 Adicionar as outras restrições no callback pra ver no que dá.
+  - Trazer a tolerância para cá também.
+
+O que é e pra que server ILONODECALLBACK() ?
+
+#5 Implementar e aplicar callback de escolha de qual variável escolher para criar o próximo ramo.
+ - Critério de peso vs distância do valor médio na solução fracionaria.
+ - ILOUSERCONSTRAINTCALLBACKn adicionando a restrição mais violada ao invés de adicionar todas.
+ - O programa 'iloadmipex1.cpp' tem código de exemplo.
