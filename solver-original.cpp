@@ -13,10 +13,10 @@ int main(int argc, char* argv[])
     IloCplex cplex(maximumBalancedBicliqueProblem);
 
     // Limite de tempo de execução.
-    cplex.setParam(IloCplex::Param::TimeLimit, 600);
+    cplex.setParam(IloCplex::Param::TimeLimit, 30);
 
     // Limite de RAM a utilizar, em megabytes.
-    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 10000);
+    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 8000);
 
     // Verifica e ativa parâmetro bound.
     bool hasBound = false;

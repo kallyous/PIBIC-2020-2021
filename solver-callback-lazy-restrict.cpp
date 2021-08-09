@@ -83,6 +83,9 @@ int main(int argc, char* argv[])
     // Limite de RAM a utilizar, em megabytes.
     cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
 
+    // Força Cplex a utilizar todos os meus núcleos.
+//    cplex.setParam(IloCplex::Param::Threads, 8);
+
     // Verifica e ativa parâmetro bound.
     bool hasBound = false;
     int bound;
