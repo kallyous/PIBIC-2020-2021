@@ -78,10 +78,10 @@ int main(int argc, char* argv[])
     IloCplex cplex(maximumBalancedBicliqueProblem);
 
     // Limite de tempo de execução.
-    cplex.setParam(IloCplex::Param::TimeLimit, 60);
+    cplex.setParam(IloCplex::Param::TimeLimit, 600);
 
     // Limite de RAM a utilizar, em megabytes.
-    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
+    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 12000);
 
     // Força Cplex a utilizar todos os meus núcleos.
 //    cplex.setParam(IloCplex::Param::Threads, 8);

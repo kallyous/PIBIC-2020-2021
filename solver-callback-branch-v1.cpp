@@ -103,28 +103,13 @@ int main(int argc, char* argv[])
     IloCplex cplex(maximumBalancedBicliqueProblem);
 
     // Limite de tempo de execução.
-    cplex.setParam(IloCplex::Param::TimeLimit, 60);
+    cplex.setParam(IloCplex::Param::TimeLimit, 600);
 
     // Limite de RAM a utilizar, em megabytes.
-    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
+    cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 12000);
 
     // Força Cplex a utilizar todos os meus núcleos.
     cplex.setParam(IloCplex::Param::Threads, 8);
-
-    // Tolerância de integralidade
-    // cplex.setParam(IloCplex::Param::MIP::Tolerances::Integrality, 1e-3);
-
-    // Feasibility cut tolerance
-    // cplex.setParam(IloCplex::Param::Benders::Tolerances::feasibilitycut, 1e-4);
-
-    // Optimality cut tolerance
-    // cplex.setParam(IloCplex::Param::Benders::Tolerances::optimalitycut, 1e-5);
-
-    // Enfatiza solução viável em detrimento de prova
-    // cplex.setParam(IloCplex::Param::Emphasis::MIP, CPX_MIPEMPHASIS_FEASIBILITY);
-
-    // Seleciona próximo nó durante backtracing na árvore usando estimativa alternativa
-    // cplex.setParam(IloCplex::Param::MIP::Strategy::NodeSelect, CPX_NODESEL_BESTEST_ALT);
 
     // Verifica e ativa parâmetro bound.
     bool hasBound = false;

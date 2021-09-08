@@ -4,28 +4,6 @@
 #include <ilcplex/ilocplex.h>
 using namespace std;
 
-/* Versão com callback
-ILOLAZYCONSTRAINTCALLBACK2(callback, IloBoolVarArray &, x, IloBoolVarArray &, y){
-	// Ler valores de x e y, ver se alguma restrição está sendo vioolada e adicionar.
-	IloNumArray x_val (x.size());
-	IloNumArray y_val (y.size());
-	int n = x.size();
-
-	for (int i=0; i < n; i++) {
-		x_val[i] = getValue(x[i]);
-		y_val[i] = getValue(y[i]);
-	}
-
-	for (int i=0; i < n; i++) {
-		if (x_val[i] + y_val[i] > 1) {
-			add(x[i] + y[i] <= 1).end();
-		}
-	}
-
-	return;
-}
-*/
-
 int main(int argc, char* argv[])
 {
 	IloEnv env;
@@ -33,10 +11,10 @@ int main(int argc, char* argv[])
 	IloCplex cplex(maximumBalancedBicliqueProblem);
 
 	// Limite de tempo de execução.
-	cplex.setParam(IloCplex::Param::TimeLimit, 60);
+	cplex.setParam(IloCplex::Param::TimeLimit, 600);
 
 	// Limite de RAM a utilizar, em megabytes.
-	cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 4000);
+	cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, 12000);
 
 	bool hasBound = false;
 	int bound;
