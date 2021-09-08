@@ -96,5 +96,6 @@ fabric.properties
 
 # End of https://www.toptal.com/developers/gitignore/api/c,c++,clion
 
-# Binário de execução de build e testes
-solver
+# Coisas locais
+ref/
+.venv
